@@ -1,6 +1,4 @@
 import streamlit as st
-from backend.summarizer import generate_summary
-from backend.qna_engine import ask_question, generate_logic_questions
 import os
 import PyPDF2
 import io
@@ -35,6 +33,13 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
     }
+    .error-box {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -43,19 +48,57 @@ st.markdown("""
 def check_hf_token():
     token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
     if not token or token == "your_token_here":
-        st.error("⚠️ HuggingFace API token not found! Please set HUGGINGFACEHUB_API_TOKEN in your environment variables.")
-        st.info("Get your token from: https://huggingface.co/settings/tokens")
         return False
     return True
+
+# Import backend modules only if token is available
+def import_backend_modules():
+    try:
+        if check_hf_token():
+            from backend.summarizer import generate_summary
+            from backend.qna_engine import ask_question, generate_logic_questions
+            return generate_summary, ask_question, generate_logic_questions
+        else:
+            return None, None, None
+    except Exception as e:
+        st.error(f"Error importing backend modules: {str(e)}")
+        return None, None, None
 
 # Main app
 def main():
     st.markdown('<h1 class="main-header">📄 Smart Research Assistant</h1>', unsafe_allow_html=True)
     st.markdown("### Upload a document, get a summary, and ask questions!")
     
-    # Check API token
+    # Check API token and import modules
     if not check_hf_token():
-        st.stop()
+        st.markdown('<div class="error-box">', unsafe_allow_html=True)
+        st.error("⚠️ HuggingFace API token not found!")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.info("""
+        **To fix this issue:**
+        
+        1. Go to [HuggingFace Settings](https://huggingface.co/settings/tokens) to get your API token
+        2. In your Streamlit Cloud app settings, go to **Secrets**
+        3. Add the following:
+        ```
+        HUGGINGFACEHUB_API_TOKEN = "hf_your_actual_token_here"
+        ```
+        4. Save and redeploy your app
+        """)
+        
+        st.markdown("### 🔗 Quick Links")
+        st.markdown("- [Get HuggingFace Token](https://huggingface.co/settings/tokens)")
+        st.markdown("- [Streamlit Cloud Documentation](https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app)")
+        
+        return
+    
+    # Import backend modules
+    generate_summary, ask_question, generate_logic_questions = import_backend_modules()
+    
+    if not all([generate_summary, ask_question, generate_logic_questions]):
+        st.error("❌ Failed to load AI models. Please check your API token and try again.")
+        return
     
     # File uploader
     uploaded_file = st.file_uploader(
@@ -145,7 +188,7 @@ def main():
         """)
         
         st.markdown("## ⚙️ Settings")
-        st.info("Make sure to set your HuggingFace API token in the environment variables.")
+        st.success("✅ HuggingFace API token is configured!")
         
         st.markdown("## 🔗 Links")
         st.markdown("[Get HuggingFace Token](https://huggingface.co/settings/tokens)")
