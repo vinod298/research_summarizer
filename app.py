@@ -47,6 +47,15 @@ st.markdown("""
 @st.cache_data
 def check_hf_token():
     token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
+    
+    # Debug information (remove this after fixing)
+    st.sidebar.markdown("## 🔧 Debug Info")
+    st.sidebar.write(f"Token exists: {token is not None}")
+    if token:
+        st.sidebar.write(f"Token starts with 'hf_': {token.startswith('hf_')}")
+        st.sidebar.write(f"Token length: {len(token)}")
+        st.sidebar.write(f"Token preview: {token[:10]}...")
+    
     if not token or token == "your_token_here":
         return False
     return True
