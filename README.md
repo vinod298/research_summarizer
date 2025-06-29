@@ -50,8 +50,8 @@ An AI-powered assistant for research documents. Upload a PDF or TXT file, get a 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/genai_doc_assistant.git
-   cd genai_doc_assistant
+   git clone https://github.com/vinod298/research_summarizer.git
+   cd research_summarizer
    ```
 2. **Install dependencies**
    ```bash
